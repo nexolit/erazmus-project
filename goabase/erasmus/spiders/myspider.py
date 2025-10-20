@@ -1,16 +1,15 @@
-import re
 import scrapy
 from datetime import datetime
 
 class MySpider(scrapy.Spider):
     name = 'myspider'
     start_urls = [
-        'https://www.daswerk.org/programm',
+        'https://www.goabase.net/party/?saAtt[geoloc]=Wien',
     ]
 
     custom_settings = {
         'FEEDS': {
-            'Daswerk.json': {
+            'Goabase.json': {
                 'format': 'json',
                 'overwrite': True,  # If the file already exists, it will overwrite it
             },
@@ -18,62 +17,59 @@ class MySpider(scrapy.Spider):
     }
 
     def parse(self, response):
-        # Route by domain to discover event links
-        url = response.url
-        self.logger.info(f"Scraping main page: {url}")
+        self.logger.info(f"Scraping main page: {response.url}")
 
-        links = response.css('a.preview-item--link::attr(href)').getall()
+        # Loop through each event container
+        for party in response.css('#partylist article'):  # adjust selector to parent container
+            # Title URL and Description
+            title = party.css('.party-box span h3::text').get().strip()
+            url = party.css('.party-box a::attr(href)').get()
 
-        for link in links:
-            yield response.follow(link, callback=self.parse_event)
+            # fx-grow1 data (Location, Date, Venue)
+            raw_data = party.css('.fx-grow1::text').getall()
+            cleaned = [t.strip().replace("·", "") for t in raw_data if t.strip()]
 
-    def parse_event(self, response):
-        url = response.url
+            # Assume triples: Location, Date, Venue
+            location, date_text, venue = (cleaned + [None] * 3)[:3]
 
-        # Collect content text from main areas
-        content = response.css('.detail-content ::text').getall()
-        title = response.css('p.main--header-title::text').get()
+            if "Wien" not in location:
+                yield None
 
-        date = self.clean_date(response.css('li:nth-child(1)::text').get())
-        time = response.css('li:nth-child(2)::text').get()
+            # Optional: parse date to standard format
+            print(date_text)
+            parsed_date = self.parse_date(date_text)
 
-        today_date = datetime.strftime(datetime.today(), "%#d. %#m. %Y")
-        if date != today_date:
-            yield None
+            # Pass info to parse_desc via meta
+            yield response.follow (
+                url,
+                callback=self.parse_desc,
+                meta={
+                    "Title": title,
+                    "Link": url,
+                    "Date": parsed_date,
+                    "playwright": True
+                }
+            )
+
+    def parse_desc(self, response):
+        desc = response.css("#party_lineup ::text").get() \
+               or response.css("#party_memo ::text").get() \
+               or "Coming soon!"
 
         yield {
-            'Link': url,
-            'Title': title.strip(),
-            'Date': date.strip(),
-            'Time': time.strip(),
-            'content': content,
+            "Title": response.meta["Title"],
+            "Link": response.meta["Link"],
+            "Date": response.meta["Date"],
+            "Content": desc
         }
 
-    def clean_date(self, date):
-        # Mapping German month names to numbers
-        months = {
-            "Januar": 1,
-            "Februar": 2,
-            "März": 3,
-            "April": 4,
-            "Mai": 5,
-            "Juni": 6,
-            "Juli": 7,
-            "August": 8,
-            "September": 9,
-            "Oktober": 10,
-            "November": 11,
-            "Dezember": 12
-        }
-
-        # Regex to extract day, month, optional year
-        match = re.search(r"\b(\d{1,2})\.?\s+(\w+)(?:\s+(\d{4}))?", date)
-
-        if match:
-            day = int(match.group(1))
-            month_name = match.group(2)
-            month_num = months[month_name]
-            year = int(match.group(3)) if match.group(3) else datetime.now().year
-            result = f"{day}. {month_num}. {year}"
-            return result  # Example Output: 9. 11. [YEAR] or 9. 11. 2025 if no year in input
-        return None
+    def parse_date(self, date_str):
+        #Convert something like 'Fri, 24 Oct 2025, 16:00' into '24.10.2025 16:00'.
+        try:
+            date_str = date_str.split(" - ")[0]
+            date_str = date_str.replace("Sept", "Sep")
+            dt = datetime.strptime(date_str, "%a, %d %b %Y, %H:%M")
+            return dt.strftime("%d.%m.%Y")
+        except Exception:
+            print(f"Error parsing date: {date_str}")
+            return None
