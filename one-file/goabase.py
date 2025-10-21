@@ -11,7 +11,7 @@ class MySpider(scrapy.Spider):
 
     custom_settings = {
         'FEEDS': {
-            'Goabase.json': {
+            'Events.json': {
                 'format': 'json',
                 'overwrite': True,  # If the file already exists, it will overwrite it
             },
@@ -45,12 +45,8 @@ class MySpider(scrapy.Spider):
                 continue
 
             # Optional: parse date to standard format
-            print(date_text)
+            #print(date_text)
             parsed_date = self.parse_date(date_text)
-
-            if (datetime.now().strftime("%m/%Y") != parsed_date.strftime("%m/%Y")
-                    and datetime.now() < parsed_date):
-                continue
 
             # Pass info to parse_desc via meta
             yield response.follow (
@@ -87,10 +83,10 @@ class MySpider(scrapy.Spider):
                 content = content[:350] + "..."
 
         yield {
-            "🌃 Title": response.meta["Title"],
-            "📅 Date": response.meta["Date"],
-            "🗯 Description": content,
-            "🔗 Link": response.meta["Link"],
+            "Title": response.meta["Title"],
+            "Date": response.meta["Date"],
+            "Description": content,
+            "Link": response.meta["Link"],
         }
 
     def parse_date(self, date_str):

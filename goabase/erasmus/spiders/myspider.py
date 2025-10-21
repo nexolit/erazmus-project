@@ -11,7 +11,7 @@ class MySpider(scrapy.Spider):
 
     custom_settings = {
         'FEEDS': {
-            'Goabase.json': {
+            'Events.json': {
                 'format': 'json',
                 'overwrite': True,  # If the file already exists, it will overwrite it
             },
