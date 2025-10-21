@@ -2,7 +2,7 @@ import scrapy
 from datetime import datetime
 
 class MySpider(scrapy.Spider):
-    name = 'myspider'
+    name = 'goabase'
     start_urls = [
         'https://www.goabase.net/party/?saAtt[geoloc]=Wien',
     ]
