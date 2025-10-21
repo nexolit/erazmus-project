@@ -32,7 +32,6 @@ def send_data_to_telegram():
         link = item['Link']
         title = item['Title']
 
-
         content = item["Content"]
         s1 = [item.replace('\n', "") for item in content]
         s2 = [item.replace('\nx', "") for item in s1]

@@ -48,6 +48,10 @@ class MySpider(scrapy.Spider):
             print(date_text)
             parsed_date = self.parse_date(date_text)
 
+            if (datetime.now().strftime("%m/%Y") != parsed_date.strftime("%m/%Y")
+                    and datetime.now() < parsed_date):
+                continue
+
             # Pass info to parse_desc via meta
             yield response.follow (
                 url,
@@ -55,7 +59,7 @@ class MySpider(scrapy.Spider):
                 meta={
                     "Title": title,
                     "Link": url,
-                    "Date": parsed_date,
+                    "Date": parsed_date.strftime("%d.%m.%Y"),
                     "playwright": True
                 }
             )
@@ -65,11 +69,28 @@ class MySpider(scrapy.Spider):
                or response.css("#party_memo ::text").get() \
                or "Coming soon!"
 
+        s1 = [item.replace('\n', "") for item in desc]
+        s2 = [item.replace('\nx', "") for item in s1]
+        s3 = [item.replace('x ', "") for item in s2]
+        s4 = [item.replace('\xa0', "") for item in s3]
+
+        content = "".join(s4)
+
+        # Cut content at around 350 characters, ending with a dot
+        if len(content) > 350:
+            # Find the last dot within the first 350 characters
+            last_dot = content[:350].rfind('.')
+            if last_dot != -1:
+                content = content[:last_dot + 1]  # Include the dot
+            else:
+                # If no dot found, just cut at 350 characters
+                content = content[:350] + "..."
+
         yield {
-            "Title": response.meta["Title"],
-            "Link": response.meta["Link"],
-            "Date": response.meta["Date"],
-            "Content": desc
+            "🌃 Title": response.meta["Title"],
+            "📅 Date": response.meta["Date"],
+            "🗯 Description": content,
+            "🔗 Link": response.meta["Link"],
         }
 
     def parse_date(self, date_str):
@@ -77,8 +98,7 @@ class MySpider(scrapy.Spider):
         try:
             date_str = date_str.split(" - ")[0]
             date_str = date_str.replace("Sept", "Sep")
-            dt = datetime.strptime(date_str, "%a, %d %b %Y, %H:%M")
-            return dt.strftime("%d.%m.%Y")
+            return datetime.strptime(date_str, "%a, %d %b %Y, %H:%M")
         except Exception:
             print(f"Error parsing date: {date_str}")
             return None
