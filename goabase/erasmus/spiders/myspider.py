@@ -14,6 +14,13 @@ class MySpider(scrapy.Spider):
                 'overwrite': True,  # If the file already exists, it will overwrite it
             },
         },
+        "DOWNLOAD_HANDLERS": {
+            "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+            "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+        },
+        "TWISTED_REACTOR": "twisted.internet.asyncioreactor.AsyncioSelectorReactor",
+        "PLAYWRIGHT_BROWSER_TYPE": "webkit",
+        "PLAYWRIGHT_LAUNCH_OPTIONS": {"headless": True},
     }
 
     def parse(self, response):
