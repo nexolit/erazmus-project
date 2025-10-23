@@ -10,7 +10,6 @@ load_dotenv()
 KEY = str(os.getenv('KEY'))
 TODAY_CHAT_ID = str(os.getenv('TODAY_CHAT_ID'))
 UPCOMING_CHAT_ID = str(os.getenv('UPCOMING_CHAT_ID'))
-DAMIENS_CHAT_ID = str(os.getenv('DAMIENS_CHAT_ID'))
 
 # Convert JSON Lines to standard JSON
 def open_jsonlines(json_file):

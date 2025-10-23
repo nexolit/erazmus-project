@@ -4,7 +4,7 @@ from scrapy.crawler import CrawlerProcess
 from datetime import datetime
 
 class MySpider(scrapy.Spider):
-    name = "goabase"
+    name = "clublucia"
     start_urls = ["https://www.clublucia.at/"]
 
     custom_settings = {
