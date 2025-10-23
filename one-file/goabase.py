@@ -61,8 +61,8 @@ class MySpider(scrapy.Spider):
 
 
     def parse_desc(self, response):
-        desc = response.css("#party_lineup ::text").get() \
-               or response.css("#party_memo ::text").get() \
+        desc = "".join(response.css("#party_memo ::text").getall()) \
+               or "".join(response.css("#party_lineup ::text").getall()) \
                or "Coming soon!"
 
         s1 = [item.replace('\n', "") for item in desc]
