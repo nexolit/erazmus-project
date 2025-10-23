@@ -11,7 +11,7 @@ class MySpider(scrapy.Spider):
 
     custom_settings = {
         'FEEDS': {
-            'Events.json': {
+            'Events.jsonl': {
                 'format': 'json',
                 'overwrite': True,  # If the file already exists, it will overwrite it
             },

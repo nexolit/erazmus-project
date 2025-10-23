@@ -10,12 +10,11 @@ class MySpider(scrapy.Spider):
     ]
 
     custom_settings = {
-        'FEEDS': {
-            'Events.json': {
-                'format': 'json',
-                'overwrite': True,  # If the file already exists, it will overwrite it
-            },
-        },
+        "FEEDS": { "Events.jsonl": {
+            "format": "jsonlines",
+            "store_empty": False,
+            "overwrite": False  # <- key to add new items instead of overwriting
+        }},
         "DOWNLOAD_HANDLERS": {
             "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
             "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
@@ -59,6 +58,7 @@ class MySpider(scrapy.Spider):
                     "playwright": True
                 }
             )
+
 
     def parse_desc(self, response):
         desc = response.css("#party_lineup ::text").get() \

@@ -8,7 +8,11 @@ class MySpider(scrapy.Spider):
     start_urls = ["https://www.clublucia.at/"]
 
     custom_settings = {
-        "FEEDS": {"Events.json": {"format": "json", "overwrite": True}},
+        "FEEDS": { "Events.jsonl": {
+            "format": "jsonlines",
+            "store_empty": False,
+            "overwrite": False,  # <- key to add new items instead of overwriting
+        }},
         "DOWNLOAD_HANDLERS": {
             "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
             "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
@@ -19,26 +23,24 @@ class MySpider(scrapy.Spider):
         "LOG_LEVEL": "INFO",
     }
 
+    # tell Scrapy to use Playwright for rendering
     async def start(self):
-        # tell Scrapy to use Playwright for rendering
         for url in self.start_urls:
             yield scrapy.Request(url, meta={"playwright": True}, callback=self.parse)
 
     async def parse(self, response):
         self.logger.info(f"Scraping main page: {response.url}")
-
         for party_url in response.css('.wpem-event-action-url::attr(href)'):
             yield response.follow(party_url, callback=self.parse_desc)
 
     def parse_desc(self, response):
-        print("Being followed")
         # Extract details
         title = response.css(".booking-title ::text").get()
         desc = response.css(".event-full-description p::text").getall()
         date_text = response.css(".big-event-date p ::text").get()
         parsed_date = self.parse_date(date_text) if date_text else None
 
-        s1 = [item.replace('\n', "") for item in desc]
+        s1 = [item.replace('\n', " ") for item in desc]
         s2 = [item.replace('\nx', "") for item in s1]
         s3 = [item.replace('x ', "") for item in s2]
         s4 = [item.replace('\xa0', "") for item in s3]
@@ -66,10 +68,8 @@ class MySpider(scrapy.Spider):
         """Convert something like 'Fri, 24 Oct 2025, 16:00' into '24.10.2025'."""
         try:
             date_str = date_str.split(" - ")[0][:-5] + str(datetime.now().year)
-            print(date_str)
             clean_date = re.sub(r'\b([A-Za-z]+)\b', lambda m: m.group(1)[:3],
                          re.sub(r'(\d+)(?:st|nd|rd|th)', r'\1', date_str))
-            print(clean_date)
             return datetime.strptime(clean_date, "%a, %d %b, %Y")
         except Exception:
             print(f"Error parsing date: {date_str}")
