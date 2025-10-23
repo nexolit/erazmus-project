@@ -3,6 +3,7 @@ import os
 import requests
 import json
 from dotenv import load_dotenv
+from datetime import datetime
 
 load_dotenv()
 KEY = str(os.getenv('KEY'))
@@ -23,13 +24,16 @@ def send_data_to_telegram():
         desc = event['Description'] or ""
         link = event['Link'] or ""
 
-        # check if date is today if so send to today channel
         message = (title + "\n" if title else "") + \
                   (f"📅 Date: {date}\n" if date else "") + \
                   (f"📜 Description: {desc}\n" if desc else "") + \
                   (f"⛓️‍💥 Link: {link}\n" if link else "") \
 
-        send_message(message, UPCOMING_CHAT_ID)
+        # check if date is today if so send to today channel
+        if date == datetime.today().strftime("%d.%m.%Y"):
+            send_message(message, TODAY_CHAT_ID)
+        else:
+            send_message(message, UPCOMING_CHAT_ID)
 
 def send_message(message, channel_id):
     requests.post(f'https://api.telegram.org/bot{KEY}/sendMessage?chat_id={channel_id}&text=%s' % message)
