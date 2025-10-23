@@ -1,5 +1,6 @@
 import os
 
+import requests
 import json
 import re
 from dotenv import load_dotenv
@@ -44,7 +45,7 @@ def send_data_to_telegram():
             send_message(message, UPCOMING_CHAT_ID)
 
 def send_message(message, channel_id):
-    #requests.post(f'https://api.telegram.org/bot{KEY}/sendMessage?chat_id={channel_id}&text=%s' % message)
+    requests.post(f'https://api.telegram.org/bot{KEY}/sendMessage?chat_id={channel_id}&text=%s' % message)
     print("Sent message: " + message)
     print("CHANNEL_ID: " + channel_id)
 

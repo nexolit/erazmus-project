@@ -45,7 +45,7 @@ class MySpider(scrapy.Spider):
         s3 = [item.replace('x ', "") for item in s2]
         s4 = [item.replace('\xa0', "") for item in s3]
 
-        content = "".join(s4)
+        content = " ".join(s4)
 
         # Cut content at around 350 characters, ending with a dot
         if len(content) > 350:
